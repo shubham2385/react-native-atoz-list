@@ -1,28 +1,27 @@
 import React, { Component } from 'react';
-import { View, Text, PanResponder } from 'react-native';
+import { View, Text, PanResponder, Vibration } from 'react-native';
 import PropTypes from 'prop-types';
 
 class LetterPicker extends Component {
 
     render() {
         return (
-            <Text style={{ fontSize: 11, fontWeight: 'bold' }}>
+          <TouchableOpacity onPress={() => this.props.setLatter(this.props.letter)}>
+            <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#7F48FB' }}>
                 {this.props.letter}
             </Text>
+          </TouchableOpacity>
         );
     }
 }
 
-const Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+const Alphabet = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
 export default class AlphabetPicker extends Component {
     constructor(props, context) {
         super(props, context);
         if(props.alphabet){
             Alphabet = props.alphabet;
         }
-        this.state = {
-            alphabet: Alphabet,
-          };
     }
 
     componentWillMount() {
@@ -30,11 +29,11 @@ export default class AlphabetPicker extends Component {
             onStartShouldSetPanResponder: () => true,
             onMoveShouldSetPanResponder: () => true,
             onPanResponderGrant: (e, gestureState) => {
-                this.props.onTouchStart && this.props.onTouchStart();
+                /*this.props.onTouchStart && this.props.onTouchStart();
 
                 this.tapTimeout = setTimeout(() => {
                     this._onTouchLetter(this._findTouchedLetter(gestureState.y0));
-                }, 100);
+                }, 100);*/
             },
             onPanResponderMove: (evt, gestureState) => {
                 clearTimeout(this.tapTimeout);
@@ -44,13 +43,12 @@ export default class AlphabetPicker extends Component {
             onPanResponderRelease: this._onPanResponderEnd.bind(this),
         });
     }
-    componentWillReceiveProps(nextProps) {
-        if(this.props.alphabet !== nextProps.alphabet){
-            this.setState({alphabet:nextProps.alphabet})
-          }
-      }
 
     _onTouchLetter(letter) {
+        ReactNativeHapticFeedback.trigger('impactLight', true);
+        setTimeout(() => {
+          Vibration.cancel();
+        }, 250);
         letter && this.props.onTouchLetter && this.props.onTouchLetter(letter);
     }
 
@@ -62,10 +60,9 @@ export default class AlphabetPicker extends Component {
 
     _findTouchedLetter(y) {
         let top = y - (this.absContainerTop || 0);
-        const {alphabet} = this.state
 
         if (top >= 1 && top <= this.containerHeight) {
-            return alphabet[Math.round((top / this.containerHeight) * alphabet.length)]
+            return Alphabet[Math.floor((top / this.containerHeight) * Alphabet.length)]
         }
     }
 
@@ -76,10 +73,18 @@ export default class AlphabetPicker extends Component {
         });
     }
 
+    setLatter = (latter) => {
+        this._onTouchLetter(latter);
+    }
+
     render() {
-        const {alphabet} = this.state
-        this._letters = (
-            alphabet.map((letter) => <LetterPicker letter={letter} key={letter} />)
+        this._letters = this._letters || (
+            Alphabet.map((letter) =>
+              <LetterPicker
+                letter={letter}
+                key={letter}
+                setLatter={this.setLatter}
+              />)
         );
 
         return (
@@ -87,12 +92,11 @@ export default class AlphabetPicker extends Component {
                 ref='alphabetContainer'
                 {...this._panResponder.panHandlers}
                 onLayout={this._onLayout.bind(this)}
-                style={{ paddingHorizontal: 5, backgroundColor: '#fff', borderRadius: 1, justifyContent: 'center' }}>
+                style={{ paddingHorizontal: 5, backgroundColor: 'transprate', borderRadius: 1, justifyContent: 'center' }}>
                 <View>
                     {this._letters}
                 </View>
             </View>
         );
     }
-
 }
